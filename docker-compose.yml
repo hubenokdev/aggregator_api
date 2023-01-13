@@ -1,0 +1,45 @@
+version: '3'
+
+services:
+
+  redis:
+    container_name: redis
+    image: redis:7.0.5
+    restart: on-failure
+    ports:
+      - "6380:6379"
+    volumes:
+      - ./redis-data:/data
+    entrypoint: redis-server --appendonly yes
+
+  fetch2:
+    container_name: fetch2
+    image: cryptoexchange.aggregator.fetch:0.0.2
+    build:
+      context: ./fetch
+      dockerfile: Dockerfile
+
+  api2:
+    container_name: api2
+    image: cryptoexchange.aggregator.api:0.2.0
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    volumes:
+      - ./api/cert:/usr/app/cert
+    ports:
+      - "443:443"
+
+  api2-rust:
+    container_name: api-rust
+    image: cryptoexchange.aggregator.api-rust:0.0.1
+    build:
+      context: ./api_rust
+      dockerfile: Dockerfile
+    environment:
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
+    volumes:
+      - ./api_rust/cert:/cert
+    ports:
+      - "8081:8080"
